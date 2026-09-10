@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-main: #070913;
+    --bg-card: rgba(15, 23, 42, 0.75);
+    --border-card: rgba(255, 255, 255, 0.08);
+    --neon-cyan: #00f0ff;
+    --neon-purple: #a855f7;
+    --neon-gold: #eab308;
+    --neon-rose: #f43f5e;
+    --neon-emerald: #10b981;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: #f8fafc;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    overflow-x: hidden;
+    user-select: none;
+  }
+}
+
+/* Custom cyber game glassmorphism cards */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-panel-glow {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.15), inset 0 0 15px rgba(0, 240, 255, 0.05);
+}
+
+.glass-panel-gold {
+  background: rgba(25, 20, 10, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  box-shadow: 0 0 30px rgba(234, 179, 8, 0.2), inset 0 0 15px rgba(234, 179, 8, 0.08);
+}
+
+/* Neon Text Glows */
+.text-glow-cyan {
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.75), 0 0 24px rgba(0, 240, 255, 0.4);
+}
+
+.text-glow-gold {
+  text-shadow: 0 0 12px rgba(234, 179, 8, 0.75), 0 0 24px rgba(234, 179, 8, 0.4);
+}
+
+.text-glow-rose {
+  text-shadow: 0 0 12px rgba(244, 63, 94, 0.75), 0 0 24px rgba(244, 63, 94, 0.4);
+}
+
+.text-glow-purple {
+  text-shadow: 0 0 12px rgba(168, 85, 247, 0.75), 0 0 24px rgba(168, 85, 247, 0.4);
+}
+
+/* Screen shake animation */
+@keyframes screenShake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-4px, 4px) rotate(-0.5deg); }
+  40% { transform: translate(4px, -4px) rotate(0.5deg); }
+  60% { transform: translate(-4px, -2px) rotate(0deg); }
+  80% { transform: translate(4px, 2px) rotate(0.5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+.animate-screen-shake {
+  animation: screenShake 0.4s ease-in-out;
+}
+
+/* Pulse glow keyframe */
+@keyframes cyberPulse {
+  0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 15px rgba(0, 240, 255, 0.4)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 30px rgba(0, 240, 255, 0.8)); }
+}
+
+.animate-cyber-pulse {
+  animation: cyberPulse 3s infinite ease-in-out;
+}
+
+/* Floating animation */
+@keyframes subtleFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: subtleFloat 4s ease-in-out infinite;
+}
+
+/* Scanline Matrix Background effect */
+.bg-scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.25) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.03),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 3px, 6px 100%;
+}
