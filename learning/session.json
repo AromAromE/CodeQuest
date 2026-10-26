@@ -1,0 +1,29 @@
+{
+  "user": {
+    "name": "Learner",
+    "level": 2,
+    "xp": 90,
+    "xp_to_next_level": 450,
+    "streak_days": 1,
+    "combo_multiplier": 1.4
+  },
+  "today_topic": "Introduction to CodeQuest \u0026 Deliberate Learning",
+  "quests": [
+    {
+      "id": "quest-1",
+      "title": "Setup Backend \u0026 Models",
+      "description": "Define Go structs and file storage for session and notes.",
+      "xp_reward": 150,
+      "completed": true,
+      "completed_at": "2026-10-26T08:48:11.0152053+07:00"
+    },
+    {
+      "id": "quest-2",
+      "title": "Test Quest Completion API",
+      "description": "Trigger quest completion endpoint and verify XP gain and level up.",
+      "xp_reward": 200,
+      "completed": true,
+      "completed_at": "2026-10-26T08:53:26.0499941+07:00"
+    }
+  ]
+}

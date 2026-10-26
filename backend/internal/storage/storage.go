@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"codequest-backend/internal/models"
@@ -159,4 +161,118 @@ func CompleteQuest(questID string) (models.CompleteQuestResponse, error) {
 		LeveledUp: leveledUp,
 		Session:   session,
 	}, nil
+}
+
+// ponytail: basic line-based parser for frontmatter. Add full yaml package when nested objects needed.
+func parseNoteFile(filePath, defaultType string) (models.Note, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return models.Note{}, err
+	}
+
+	content := string(data)
+	note := models.Note{
+		ID:        strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath)),
+		Type:      defaultType,
+		Content:   content,
+		CreatedAt: time.Now(),
+	}
+
+	parts := strings.SplitN(content, "---", 3)
+	if len(parts) >= 3 {
+		frontmatter := parts[1]
+		note.Content = strings.TrimSpace(parts[2])
+
+		lines := strings.Split(frontmatter, "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			kv := strings.SplitN(line, ":", 2)
+			if len(kv) != 2 {
+				continue
+			}
+			key := strings.TrimSpace(kv[0])
+			val := strings.Trim(strings.TrimSpace(kv[1]), "\"'\r")
+
+			switch key {
+			case "id":
+				if val != "" {
+					note.ID = val
+				}
+			case "title":
+				note.Title = val
+			case "type":
+				if val != "" {
+					note.Type = val
+				}
+			case "summary":
+				note.Summary = val
+			case "tags":
+				rawTags := strings.Trim(val, "[] ")
+				for _, t := range strings.Split(rawTags, ",") {
+					tag := strings.Trim(strings.TrimSpace(t), "\"'")
+					if tag != "" {
+						note.Tags = append(note.Tags, tag)
+					}
+				}
+			}
+		}
+	}
+
+	if note.Title == "" {
+		note.Title = note.ID
+	}
+
+	return note, nil
+}
+
+// GetNotes reads markdown files from learning/pinned and learning/discoveries
+func GetNotes() ([]models.Note, error) {
+	_, learningDir := getPaths()
+	notes := make([]models.Note, 0)
+
+	subdirs := []struct {
+		folder   string
+		noteType string
+	}{
+		{folder: filepath.Join(learningDir, "pinned"), noteType: "pinned"},
+		{folder: filepath.Join(learningDir, "discoveries"), noteType: "discovery"},
+	}
+
+	for _, sub := range subdirs {
+		_ = os.MkdirAll(sub.folder, 0755)
+		entries, err := os.ReadDir(sub.folder)
+		if err != nil {
+			continue
+		}
+		for _, entry := range entries {
+			if entry.IsDir() || filepath.Ext(entry.Name()) != ".md" {
+				continue
+			}
+			fullPath := filepath.Join(sub.folder, entry.Name())
+			note, err := parseNoteFile(fullPath, sub.noteType)
+			if err != nil {
+				continue
+			}
+			notes = append(notes, note)
+		}
+	}
+
+	return notes, nil
+}
+
+// GetNoteByID returns a specific note by ID
+func GetNoteByID(id string) (models.Note, error) {
+	notes, err := GetNotes()
+	if err != nil {
+		return models.Note{}, err
+	}
+	for _, n := range notes {
+		if n.ID == id {
+			return n, nil
+		}
+	}
+	return models.Note{}, errors.New("note not found")
 }

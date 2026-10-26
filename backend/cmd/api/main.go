@@ -1,93 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os"
-	"time"
 
-	"codequest-backend/internal/models"
+	"codequest-backend/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
-// In-Memory Database Store for Instant Local Playability & High Performance
-type DBStore struct {
-	User     models.User
-	Projects []models.Project
-	Boss     models.Boss
-}
-
-var store = DBStore{
-	User: models.User{
-		ID:            "user-1",
-		Username:      "NeoCoder",
-		Email:         "neocoder@codequest.dev",
-		Level:         4,
-		XP:            320,
-		XPToNextLevel: 750,
-		Coins:         450,
-		StreakDays:    5,
-		LastActiveDate: time.Now(),
-		CreatedAt:     time.Now().Add(-120 * time.Hour),
-	},
-	Projects: []models.Project{
-		{
-			ID:            "proj-1",
-			UserID:        "user-1",
-			Title:         "CodeQuest RPG Engine",
-			Description:   "Full-stack gamified coding platform with real-time dopamine triggers.",
-			Language:      "TypeScript / Go",
-			Framework:     "Next.js & Gin",
-			Level:         4,
-			XP:            260,
-			XPToNextLevel: 400,
-			TierName:      "Growing API",
-			Progress:      45,
-			Tasks: []models.Task{
-				{
-					ID:          "t-1",
-					ProjectID:   "proj-1",
-					Title:       "Implement Web Audio SFX Engine",
-					Description: "Zero-latency arcade synthesizer for XP & Coin pickups",
-					Difficulty:  models.DifficultyMedium,
-					XPReward:    75,
-					CoinReward:  35,
-					Completed:   true,
-					Tags:        []string{"frontend"},
-				},
-				{
-					ID:          "t-2",
-					ProjectID:   "proj-1",
-					Title:       "Build Developer Evolution Avatar",
-					Description: "Visual SVG transformations for Lv 1 -> 100+ stages",
-					Difficulty:  models.DifficultyHard,
-					XPReward:    200,
-					CoinReward:  100,
-					Completed:   false,
-					Tags:        []string{"frontend", "system_design"},
-				},
-			},
-		},
-	},
-	Boss: models.Boss{
-		ID:             "boss-1",
-		Name:           "The Monolith Dragon",
-		Title:          "Ancient Kraken of Legacy Spaghetti Code",
-		Description:    "A terrifying colossal dragon woven from 1,000,000 lines of unrefactored legacy code.",
-		MaxHP:          2500,
-		CurrentHP:      1850,
-		AvatarSvgType:  "dragon",
-		Weakness:       "system_design",
-		WeeklyDeadline: "3 days 14 hours remaining",
-		IsDefeated:     false,
-	},
-}
-
 func main() {
 	r := gin.Default()
 
-	// Lightweight zero-dependency CORS middleware compatible with all Go runtime versions
+	// CORS middleware for localhost frontend
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -95,14 +20,65 @@ func main() {
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, PATCH, DELETE")
 
 		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
+			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
 
 		c.Next()
 	})
 
-	
+	api := r.Group("/api")
+	{
+		// 1. Session state
+		api.GET("/session", func(c *gin.Context) {
+			session, err := storage.GetSession()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, session)
+		})
+
+		// 2. Complete quest
+		api.POST("/quests/:id/complete", func(c *gin.Context) {
+			questID := c.Param("id")
+			res, err := storage.CompleteQuest(questID)
+			if err != nil {
+				if err.Error() == "quest not found" {
+					c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+					return
+				}
+				if err.Error() == "quest already completed" {
+					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+					return
+				}
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, res)
+		})
+
+		// 3. Notes list
+		api.GET("/notes", func(c *gin.Context) {
+			notes, err := storage.GetNotes()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, notes)
+		})
+
+		// 4. Single note
+		api.GET("/notes/:id", func(c *gin.Context) {
+			id := c.Param("id")
+			note, err := storage.GetNoteByID(id)
+			if err != nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, note)
+		})
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {

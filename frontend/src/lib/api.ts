@@ -1,21 +1,30 @@
+import { Session, Note, CompleteQuestResponse } from "@/types/game";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
 export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("codequest_token") : null;
-  const headers = new Headers(options.headers || {});
-  headers.set("Content-Type", "application/json");
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
-    headers,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
   if (!response.ok) {
-    throw new Error(`API Error ${response.status}: ${response.statusText}`);
+    const errBody = await response.json().catch(() => null);
+    throw new Error(errBody?.error || `API Error ${response.status}: ${response.statusText}`);
   }
 
   return response.json();
 }
+
+export const api = {
+  getSession: () => fetchApi<Session>("/session"),
+  completeQuest: (id: string) =>
+    fetchApi<CompleteQuestResponse>(`/quests/${encodeURIComponent(id)}/complete`, {
+      method: "POST",
+    }),
+  getNotes: () => fetchApi<Note[]>("/notes"),
+  getNoteById: (id: string) => fetchApi<Note>(`/notes/${encodeURIComponent(id)}`),
+};

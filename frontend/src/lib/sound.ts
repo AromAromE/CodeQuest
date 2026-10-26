@@ -58,6 +58,10 @@ class SoundEngine {
   }
 
   // XP gain ding (sparkly high frequency harmonic)
+  public playTaskComplete(multiplier: number = 1) {
+    this.playXpGain(multiplier);
+  }
+
   public playXpGain(multiplier: number = 1) {
     if (this.isMuted) return;
     const ctx = this.getContext();
